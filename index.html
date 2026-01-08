@@ -5,24 +5,46 @@
   <title>LINE Mini App</title>
 </head>
 <body>
-  <h1>LINE Mini App ของฉัน</h1>
-  <p>กำลังทดสอบระบบ...</p>
+  <h2>ระบบแจ้งเตือนภัยพิบัติ (หาดใหญ่)</h2>
+  <p id="username">กำลังโหลดข้อมูลผู้ใช้...</p>
+
+  <button onclick="showAlert()">🔔 แจ้งเตือนภัย</button><br><br>
+  <button onclick="showShelter()">📍 ศูนย์พักพิง</button><br><br>
+  <button onclick="showHelp()">🆘 ขอความช่วยเหลือ</button><br><br>
+  <button onclick="showReport()">📢 แจ้งปัญหา</button>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     async function main() {
-      await liff.init({ 
-        liffId: "2008850608-gCaJNTgd" 
-      });
+      await liff.init({ liffId: "2008850608-gCaJNTgd" });
 
       if (!liff.isLoggedIn()) {
         liff.login();
       } else {
         const profile = await liff.getProfile();
-        document.body.innerHTML += `<p>สวัสดี ${profile.displayName}</p>`;
+        document.getElementById("username").innerText =
+          "สวัสดี " + profile.displayName;
       }
     }
+
+    function showAlert() {
+      alert("ระบบแจ้งเตือนภัยพิบัติ (กำลังพัฒนา)");
+    }
+
+    function showShelter() {
+      alert("ข้อมูลศูนย์พักพิง (กำลังพัฒนา)");
+    }
+
+    function showHelp() {
+      window.location.href = "help.html";
+    }
+
+    function showReport() {
+      alert("ระบบแจ้งปัญหา (กำลังพัฒนา)");
+    }
+
     main();
   </script>
 </body>
+
 </html>
