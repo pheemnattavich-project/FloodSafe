@@ -26,10 +26,13 @@
 
   <!-- 3️⃣ JavaScript ต้องอยู่ล่างสุด -->
   <script>
-    function sendData(e) {
-      e.preventDefault(); // ❗ กันหน้ารีเฟรช
+  function sendData(e) {
+    e.preventDefault();
+    alert("ฟังก์ชันถูกเรียกแล้ว"); // 👈 ใส่ทดสอบก่อน
+    }
 
-      fetch("URL_GOOGLE_APPS_SCRIPT_ของคุณ", {
+
+      fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec", {
         method: "POST",
         body: JSON.stringify({
           name: document.getElementById("name").value,
