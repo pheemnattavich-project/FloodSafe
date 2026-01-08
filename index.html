@@ -2,39 +2,37 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>LINE Mini App</title>
+  <title>ระบบแจ้งเตือนภัยพิบัติ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <h2>ระบบแจ้งเตือนภัยพิบัติ (หาดใหญ่)</h2>
-  <p id="username">กำลังโหลดข้อมูลผู้ใช้...</p>
 
-  <button onclick="showAlert()">🔔 แจ้งเตือนภัย</button><br><br>
-  <button onclick="showShelter()">📍 ศูนย์พักพิง</button><br><br>
-  <button onclick="showHelp()">🆘 ขอความช่วยเหลือ</button><br><br>
+  <h2>🌊 ระบบแจ้งเตือนภัยพิบัติ (หาดใหญ่)</h2>
+  <p id="username">โหมดเว็บไซต์ (ยังไม่ต้องล็อกอิน)</p>
+
+  <button onclick="showAlert()">🔔 แจ้งเตือนภัย</button>
+  <button onclick="showShelter()">📍 ศูนย์พักพิง</button>
+  <button onclick="showHelp()">🆘 ขอความช่วยเหลือ</button>
   <button onclick="showReport()">📢 แจ้งปัญหา</button>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    async function main() {
-      await liff.init({ liffId: "2008850608-gCaJNTgd" });
-  
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        redirectUri: window.location.href
-      });
-      } else {
-        const profile = await liff.getProfile();
-        document.getElementById("username").innerText =
-          "สวัสดี " + profile.displayName;
-      }
-    }
-
     function showAlert() {
-      alert("ระบบแจ้งเตือนภัยพิบัติ (กำลังพัฒนา)");
+      alert("แสดงข้อมูลแจ้งเตือนภัย (กำลังพัฒนา)");
     }
 
     function showShelter() {
-      alert("ข้อมูลศูนย์พักพิง (กำลังพัฒนา)");
+      alert("แสดงศูนย์พักพิง (กำลังพัฒนา)");
     }
 
     function showHelp() {
@@ -42,11 +40,9 @@
     }
 
     function showReport() {
-      alert("ระบบแจ้งปัญหา (กำลังพัฒนา)");
+      alert("แจ้งปัญหาให้หน่วยงาน (กำลังพัฒนา)");
     }
-
-    main();
   </script>
-</body>
 
+</body>
 </html>
