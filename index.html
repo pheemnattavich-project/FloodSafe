@@ -17,9 +17,11 @@
   <script>
     async function main() {
       await liff.init({ liffId: "2008850608-gCaJNTgd" });
-
+  
       if (!liff.isLoggedIn()) {
         liff.login();
+        redirectUri: window.location.href
+      });
       } else {
         const profile = await liff.getProfile();
         document.getElementById("username").innerText =
