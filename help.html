@@ -4,22 +4,48 @@
   <meta charset="UTF-8">
   <title>ขอความช่วยเหลือ</title>
 </head>
+
 <body>
 
-<h2>🆘 ขอความช่วยเหลือฉุกเฉิน</h2>
+  <!-- 1️⃣ เนื้อหาเว็บไซต์ -->
+  <h2>🆘 แบบฟอร์มขอความช่วยเหลือ</h2>
 
-<form>
-  <label>ชื่อผู้แจ้ง:</label><br>
-  <input type="text"><br><br>
+  <!-- 2️⃣ ฟอร์ม -->
+  <form onsubmit="sendData(event)">
+    <label>ชื่อผู้แจ้ง:</label><br>
+    <input type="text" id="name" required><br><br>
 
-  <label>สถานการณ์:</label><br>
-  <textarea></textarea><br><br>
+    <label>รายละเอียดสถานการณ์:</label><br>
+    <textarea id="detail" required></textarea><br><br>
 
-  <button type="submit">ส่งข้อมูล</button>
-</form>
+    <button type="submit">📤 ส่งข้อมูล</button>
+  </form>
 
-<button onclick="history.back()">⬅ กลับ</button>
+  <br>
+  <button onclick="history.back()">⬅ กลับหน้าหลัก</button>
+
+  <!-- 3️⃣ JavaScript ต้องอยู่ล่างสุด -->
+  <script>
+    function sendData(e) {
+      e.preventDefault(); // ❗ กันหน้ารีเฟรช
+
+      fetch("URL_GOOGLE_APPS_SCRIPT_ของคุณ", {
+        method: "POST",
+        body: JSON.stringify({
+          name: document.getElementById("name").value,
+          type: "ขอความช่วยเหลือ",
+          detail: document.getElementById("detail").value
+        })
+      })
+      .then(() => {
+        alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
+        document.querySelector("form").reset();
+      })
+      .catch(() => {
+        alert("เกิดข้อผิดพลาด ❌");
+      });
+    }
+  </script>
 
 </body>
 </html>
-
