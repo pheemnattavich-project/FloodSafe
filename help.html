@@ -27,11 +27,29 @@
 
   <!-- 3️⃣ JavaScript ต้องอยู่ล่างสุด -->
   <script>
-function sendData(e) {
-  e.preventDefault();
-  alert("ปุ่มทำงานแล้ว ✅");
-}
-</script>
+  function sendData(e) {
+    e.preventDefault();
+    alert("ฟังก์ชันถูกเรียกแล้ว"); // 👈 ใส่ทดสอบก่อน
+    }
+
+
+      fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec", {
+        method: "POST",
+        body: JSON.stringify({
+          name: document.getElementById("name").value,
+          type: "ขอความช่วยเหลือ",
+          detail: document.getElementById("detail").value
+        })
+      })
+      .then(() => {
+        alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
+        document.querySelector("form").reset();
+      })
+      .catch(() => {
+        alert("เกิดข้อผิดพลาด ❌");
+      });
+    }
+  </script>
 
 
 </body>
