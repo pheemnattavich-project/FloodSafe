@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>LINE Mini App</title>
+</head>
+<body>
+  <h1>LINE Mini App ของฉัน</h1>
+  <p>กำลังทดสอบระบบ...</p>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    async function main() {
+      await liff.init({ liffId: "ใส่_LIFF_ID_ตรงนี้" });
+
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        document.body.innerHTML += `<p>สวัสดี ${profile.displayName}</p>`;
+      }
+    }
+    main();
+  </script>
+</body>
+</html>
