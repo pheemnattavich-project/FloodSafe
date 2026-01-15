@@ -2,48 +2,191 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ระบบแจ้งเตือนภัยพิบัติ</title>
+  <title>LINE Mini App - แจ้งเตือนภัย</title>
+
+  <!-- ปรับให้เหมาะกับมือถือ -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f8;
     }
-    button {
+
+    .header {
+      background: #0f2a44;
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: white;
+      margin: 16px;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .alert {
+      background: #ffe9e9;
+      border-left: 6px solid #ff4d4f;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn span {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .back {
+      margin: 16px;
+      color: #0f2a44;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button.submit {
+      margin-top: 16px;
       width: 100%;
       padding: 12px;
-      margin: 6px 0;
+      border: none;
+      border-radius: 12px;
+      background: #0f2a44;
+      color: white;
       font-size: 16px;
     }
   </style>
 </head>
+
 <body>
 
-  <h2>🌊 ระบบแจ้งเตือนภัยพิบัติ (หาดใหญ่)</h2>
-  <p id="username">โหมดเว็บไซต์ (ยังไม่ต้องล็อกอิน)</p>
+<!-- 🔷 หน้า HOME -->
+<div id="home" class="page active">
 
-  <button onclick="showAlert()">🔔 แจ้งเตือนภัย</button>
-  <button onclick="showShelter()">📍 ศูนย์พักพิง</button>
-  <button onclick="showHelp()">🆘 ขอความช่วยเหลือ</button>
-  <button onclick="showReport()">📢 แจ้งปัญหา</button>
+  <div class="header">🚨 ระบบแจ้งเตือนภัย หาดใหญ่</div>
 
-  <script>
-  function showAlert() {
-    window.location.href = "alert.html";
+  <div class="card">
+    <div class="alert">
+      🔔 <b>แจ้งเตือนล่าสุด</b><br>
+      ระดับน้ำเพิ่มขึ้นในบางพื้นที่ โปรดติดตามสถานการณ์
+    </div>
+
+    <div class="grid">
+      <div class="btn" onclick="go('shelter')">
+        <span>📍</span>
+        ศูนย์พักพิง
+      </div>
+
+      <div class="btn" onclick="go('help')">
+        <span>🆘</span>
+        ขอความช่วยเหลือ
+      </div>
+
+      <div class="btn" onclick="go('report')">
+        <span>📢</span>
+        แจ้งปัญหา
+      </div>
+
+      <div class="btn" onclick="go('alert')">
+        <span>🔔</span>
+        รายละเอียดภัย
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔷 หน้า ขอความช่วยเหลือ -->
+<div id="help" class="page">
+  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
+
+  <div class="card">
+    <h3>🆘 ขอความช่วยเหลือ</h3>
+    <input placeholder="ชื่อผู้แจ้ง">
+    <textarea rows="4" placeholder="รายละเอียดสถานการณ์"></textarea>
+    <button class="submit">ส่งข้อมูล</button>
+  </div>
+</div>
+
+<!-- 🔷 หน้า แจ้งปัญหา -->
+<div id="report" class="page">
+  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
+
+  <div class="card">
+    <h3>📢 แจ้งปัญหา</h3>
+    <textarea rows="4" placeholder="รายละเอียดปัญหา"></textarea>
+    <button class="submit">ส่งรายงาน</button>
+  </div>
+</div>
+
+<!-- 🔷 หน้า ศูนย์พักพิง -->
+<div id="shelter" class="page">
+  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
+
+  <div class="card">
+    <h3>📍 ศูนย์พักพิงใกล้คุณ</h3>
+    <ul>
+      <li>โรงเรียน A</li>
+      <li>วัด B</li>
+      <li>ศูนย์ชุมชน C</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 🔷 หน้า รายละเอียดภัย -->
+<div id="alert" class="page">
+  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
+
+  <div class="card">
+    <h3>🔔 รายละเอียดสถานการณ์</h3>
+    <p>ฝนตกหนักต่อเนื่อง อาจเกิดน้ำท่วมฉับพลัน</p>
+  </div>
+</div>
+
+<script>
+  function go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
   }
-
-  function showShelter() {
-    window.location.href = "shelter.html";
-  }
-
-  function showHelp() {
-    window.location.href = "help.html";
-  }
-
-  function showReport() {
-    window.location.href = "report.html";
-  }
-  
-  
 </script>
 
 </body>
