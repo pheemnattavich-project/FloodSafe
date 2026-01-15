@@ -7,14 +7,11 @@
 
 <body>
 
-  <!-- 1️⃣ เนื้อหาเว็บไซต์ -->
   <h2>🆘 แบบฟอร์มขอความช่วยเหลือ</h2>
 
-  <!-- 2️⃣ ฟอร์ม -->
   <form onsubmit="sendData(event)">
     <label>ชื่อผู้แจ้ง:</label><br>
-    <input type="text" id="name">
-    <textarea id="detail"></textarea>
+    <input type="text" id="name" required><br><br>
 
     <label>รายละเอียดสถานการณ์:</label><br>
     <textarea id="detail" required></textarea><br><br>
@@ -25,13 +22,12 @@
   <br>
   <button onclick="history.back()">⬅ กลับหน้าหลัก</button>
 
-  <!-- 3️⃣ JavaScript ต้องอยู่ล่างสุด -->
+  <!-- JavaScript -->
   <script>
-  function sendData(e) {
-    e.preventDefault();
-    alert("ฟังก์ชันถูกเรียกแล้ว"); // 👈 ใส่ทดสอบก่อน
-    }
+    function sendData(e) {
+      e.preventDefault();
 
+      alert("กำลังส่งข้อมูล...");
 
       fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec", {
         method: "POST",
@@ -41,16 +37,18 @@
           detail: document.getElementById("detail").value
         })
       })
-      .then(() => {
+      .then(res => res.text())
+      .then(text => {
         alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
         document.querySelector("form").reset();
+        console.log(text);
       })
-      .catch(() => {
+      .catch(err => {
         alert("เกิดข้อผิดพลาด ❌");
+        console.error(err);
       });
     }
   </script>
-
 
 </body>
 </html>
