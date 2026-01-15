@@ -26,10 +26,12 @@ function sendData(e){
      name: document.getElementById("name").value,
      detail: document.getElementById("detail").value
    })
- }).then(()=>{
-   alert("ส่งข้อมูลเรียบร้อย");
-   location.href="index.html"; // กลับหน้าโฮมจริง
- });
+ })
+  .then(() => {
+  alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
+  liff.closeWindow();
+});
+
 }
 </script>
 
