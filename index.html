@@ -1,192 +1,126 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>LINE Mini App - แจ้งเตือนภัย</title>
+<meta charset="UTF-8">
+<title>แจ้งเตือนภัยน้ำท่วม</title>
 
-  <!-- ปรับให้เหมาะกับมือถือ -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f4f6f8;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #f2f4f7;
+}
 
-    .header {
-      background: #0f2a44;
-      color: white;
-      padding: 16px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
+.header {
+  background: linear-gradient(135deg, #4a90e2, #6fb1fc);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
 
-    .card {
-      background: white;
-      margin: 16px;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+.header h2 {
+  margin: 0;
+}
 
-    .alert {
-      background: #ffe9e9;
-      border-left: 6px solid #ff4d4f;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-    }
+.banner {
+  margin: 15px;
+  background: #fff3cd;
+  border-left: 6px solid #ff9800;
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  padding: 15px;
+}
 
-    .btn {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+.card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
 
-    .btn span {
-      font-size: 28px;
-      display: block;
-      margin-bottom: 8px;
-    }
+.card:hover {
+  background: #f0f8ff;
+}
 
-    .page {
-      display: none;
-    }
+.icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
 
-    .page.active {
-      display: block;
-    }
+.alert { color: #e53935; }
+.forecast { color: #1e88e5; }
+.help { color: #fb8c00; }
+.shelter { color: #43a047; }
 
-    .back {
-      margin: 16px;
-      color: #0f2a44;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    textarea, input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    button.submit {
-      margin-top: 16px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      background: #0f2a44;
-      color: white;
-      font-size: 16px;
-    }
-  </style>
+.footer {
+  text-align: center;
+  padding: 10px;
+  color: #666;
+  font-size: 12px;
+}
+</style>
 </head>
 
 <body>
 
-<!-- 🔷 หน้า HOME -->
-<div id="home" class="page active">
+<div class="header">
+  <h2>🌊 แจ้งเตือนภัยน้ำท่วม</h2>
+  <p>พื้นที่หาดใหญ่</p>
+</div>
 
-  <div class="header">🚨 ระบบแจ้งเตือนภัย หาดใหญ่</div>
+<div class="banner">
+  ⚠️ โปรดติดตามสถานการณ์น้ำท่วมอย่างใกล้ชิด
+</div>
 
-  <div class="card">
-    <div class="alert">
-      🔔 <b>แจ้งเตือนล่าสุด</b><br>
-      ระดับน้ำเพิ่มขึ้นในบางพื้นที่ โปรดติดตามสถานการณ์
-    </div>
+<div class="grid">
+  <div class="card" onclick="go('alert.html')">
+    <div class="icon alert">🚨</div>
+    <strong>แจ้งเตือนภัย</strong>
+  </div>
 
-    <div class="grid">
-      <div class="btn" onclick="go('shelter')">
-        <span>📍</span>
-        ศูนย์พักพิง
-      </div>
+  <div class="card" onclick="go('forecast.html')">
+    <div class="icon forecast">🌧</div>
+    <strong>การพยากรณ์</strong>
+  </div>
 
-      <div class="btn" onclick="go('help')">
-        <span>🆘</span>
-        ขอความช่วยเหลือ
-      </div>
+  <div class="card" onclick="go('help.html')">
+    <div class="icon help">🆘</div>
+    <strong>ขอความช่วยเหลือ</strong>
+  </div>
 
-      <div class="btn" onclick="go('report')">
-        <span>📢</span>
-        แจ้งปัญหา
-      </div>
-
-      <div class="btn" onclick="go('alert')">
-        <span>🔔</span>
-        รายละเอียดภัย
-      </div>
-    </div>
+  <div class="card" onclick="go('shelter.html')">
+    <div class="icon shelter">🏠</div>
+    <strong>ศูนย์พักพิง</strong>
   </div>
 </div>
 
-<!-- 🔷 หน้า ขอความช่วยเหลือ -->
-<div id="help" class="page">
-  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
-
-  <div class="card">
-    <h3>🆘 ขอความช่วยเหลือ</h3>
-    <input placeholder="ชื่อผู้แจ้ง">
-    <textarea rows="4" placeholder="รายละเอียดสถานการณ์"></textarea>
-    <button class="submit">ส่งข้อมูล</button>
-  </div>
-</div>
-
-<!-- 🔷 หน้า แจ้งปัญหา -->
-<div id="report" class="page">
-  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
-
-  <div class="card">
-    <h3>📢 แจ้งปัญหา</h3>
-    <textarea rows="4" placeholder="รายละเอียดปัญหา"></textarea>
-    <button class="submit">ส่งรายงาน</button>
-  </div>
-</div>
-
-<!-- 🔷 หน้า ศูนย์พักพิง -->
-<div id="shelter" class="page">
-  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
-
-  <div class="card">
-    <h3>📍 ศูนย์พักพิงใกล้คุณ</h3>
-    <ul>
-      <li>โรงเรียน A</li>
-      <li>วัด B</li>
-      <li>ศูนย์ชุมชน C</li>
-    </ul>
-  </div>
-</div>
-
-<!-- 🔷 หน้า รายละเอียดภัย -->
-<div id="alert" class="page">
-  <div class="back" onclick="go('home')">⬅ กลับหน้าหลัก</div>
-
-  <div class="card">
-    <h3>🔔 รายละเอียดสถานการณ์</h3>
-    <p>ฝนตกหนักต่อเนื่อง อาจเกิดน้ำท่วมฉับพลัน</p>
-  </div>
+<div class="footer">
+  ระบบแจ้งเตือนภัย | LINE Mini App
 </div>
 
 <script>
-  function go(page) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(page).classList.add('active');
-  }
+async function init() {
+  await liff.init({ liffId: "2008850608-gCaJNTgd" });
+}
+init();
+
+function go(page) {
+  window.location.href = page;
+}
 </script>
 
 </body>
