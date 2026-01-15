@@ -20,7 +20,7 @@
 function sendData(e){
  e.preventDefault();
 
- fetch("URL_Google_Apps_Script",{
+ fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec",{
    method:"POST",
    body: JSON.stringify({
      name: document.getElementById("name").value,
