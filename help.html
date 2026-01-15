@@ -1,53 +1,37 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ขอความช่วยเหลือ</title>
+<meta charset="UTF-8">
+<title>ขอความช่วยเหลือ</title>
 </head>
-
 <body>
 
-  <h2>🆘 แบบฟอร์มขอความช่วยเหลือ</h2>
+<h2>🆘 ขอความช่วยเหลือ</h2>
 
-  <form onsubmit="sendData(event)">
-    <label>ชื่อผู้แจ้ง:</label><br>
-    <input type="text" id="name" required><br><br>
+<form onsubmit="sendData(event)">
+<input type="text" id="name" placeholder="ชื่อผู้แจ้ง" required><br><br>
+<textarea id="detail" placeholder="รายละเอียด" required></textarea><br><br>
+<button type="submit">📤 ส่งข้อมูล</button>
+</form>
 
-    <label>รายละเอียดสถานการณ์:</label><br>
-    <textarea id="detail" required></textarea><br><br>
+<a href="index.html">⬅ กลับหน้าหลัก</a>
 
-    <button type="submit">📤 ส่งข้อมูล</button>
-  </form>
+<script>
+function sendData(e){
+ e.preventDefault();
 
-  <br>
-  <button onclick="history.back()">⬅ กลับหน้าหลัก</button>
-
-  <!-- JavaScript -->
-  <script>
-    function sendData(e) {
-      e.preventDefault();
-
-      alert("กำลังส่งข้อมูล...");
-
-      fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec", {
-        method: "POST",
-        body: JSON.stringify({
-          name: document.getElementById("name").value,
-          type: "ขอความช่วยเหลือ",
-          detail: document.getElementById("detail").value
-        })
-      })
-      .then(text => {
-  alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
-  window.location.href = "index.html"; // 👈 กลับหน้าโฮมจริง
-})
-      .then(res => res.text())
-      .catch(err => {
-        alert("เกิดข้อผิดพลาด ❌");
-        console.error(err);
-      });
-    }
-  </script>
+ fetch("URL_Google_Apps_Script",{
+   method:"POST",
+   body: JSON.stringify({
+     name: document.getElementById("name").value,
+     detail: document.getElementById("detail").value
+   })
+ }).then(()=>{
+   alert("ส่งข้อมูลเรียบร้อย");
+   location.href="index.html"; // กลับหน้าโฮมจริง
+ });
+}
+</script>
 
 </body>
 </html>
