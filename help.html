@@ -3,35 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <title>ขอความช่วยเหลือ</title>
+
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
+
 <body>
 
 <h2>🆘 ขอความช่วยเหลือ</h2>
 
 <form onsubmit="sendData(event)">
-<input type="text" id="name" placeholder="ชื่อผู้แจ้ง" required><br><br>
-<textarea id="detail" placeholder="รายละเอียด" required></textarea><br><br>
-<button type="submit">📤 ส่งข้อมูล</button>
+  <input type="text" id="name" placeholder="ชื่อผู้แจ้ง" required><br><br>
+  <textarea id="detail" placeholder="รายละเอียด" required></textarea><br><br>
+  <button type="submit">📤 ส่งข้อมูล</button>
 </form>
 
-<a href="index.html">⬅ กลับหน้าหลัก</a>
+<button onclick="backToLine()">⬅ กลับเข้า LINE</button>
 
 <script>
+async function init() {
+  await liff.init({ liffId: "LIFF_ID_ของคุณ" });
+}
+init();
+
 function sendData(e){
- e.preventDefault();
+  e.preventDefault();
 
- fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec",{
-   method:"POST",
-   body: JSON.stringify({
-     name: document.getElementById("name").value,
-     detail: document.getElementById("detail").value
-   })
- })
+  fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec",{
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: document.getElementById("name").value,
+      detail: document.getElementById("detail").value
+    })
+  })
+  .then(res => res.text())
   .then(() => {
-  alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
-  liff.closeWindow();
-});
+    alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
+    liff.closeWindow();   // กลับ LINE
+  })
+  .catch(err => {
+    alert("ส่งข้อมูลไม่สำเร็จ ❌");
+    console.error(err);
+  });
+}
 
+function backToLine(){
+  if (liff.isInClient()) {
+    liff.closeWindow();
+  } else {
+    window.location.href = "index.html";
+  }
 }
 </script>
 
