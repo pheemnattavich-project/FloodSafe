@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งขอความช่วยเหลือ</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f8f9fa; }
+        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; background-color: #00b900; color: white; padding: 14px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h3>🆘 แจ้งขอความช่วยเหลือ</h3>
+    <input type="text" id="name" placeholder="ชื่อผู้ประสบภัย">
+    <input type="text" id="location" placeholder="จุดเกิดเหตุ (ระบุพิกัดหรือชื่อสถานที่)">
+    <textarea id="details" placeholder="รายละเอียดความช่วยเหลือเพิ่มเติม" rows="4"></textarea>
+    <button onclick="sendData()">ส่งข้อมูล</button>
+
+    <script>
+        // เริ่มต้นใช้งาน LIFF
+        async function main() {
+            await liff.init({ liffId: "ใส่_LIFF_ID_ของคุณที่นี่" });
+        }
+        main();
+
+        async function sendData() {
+            const name = document.getElementById('name').value;
+            const location = document.getElementById('location').value;
+            const details = document.getElementById('details').value;
+
+            // ส่งข้อมูลไปที่ Google Apps Script Web App
+            const response = await fetch('ใส่_URL_WEB_APP_ที่ได้จาก_Google_Script', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: name,
+                    location: location,
+                    details: details,
+                    userId: liff.getContext().userId // เก็บ ID ผู้ใช้ไว้เผื่อติดต่อกลับ
+                })
+            });
+
+            if (response.ok) {
+                alert('ส่งข้อมูลเรียบร้อยแล้ว');
+                liff.closeWindow(); // ปิดหน้าต่าง LIFF ทันทีเมื่อส่งเสร็จ
+            }
+        }
+    </script>
+</body>
+</html>
