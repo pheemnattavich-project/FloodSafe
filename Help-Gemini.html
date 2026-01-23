@@ -9,6 +9,7 @@
         body { font-family: sans-serif; padding: 20px; background-color: #f8f9fa; }
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { width: 100%; background-color: #00b900; color: white; padding: 14px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:disabled { background-color: #ccc; }
     </style>
 </head>
 <body>
@@ -16,34 +17,68 @@
     <input type="text" id="name" placeholder="ชื่อผู้ประสบภัย">
     <input type="text" id="location" placeholder="จุดเกิดเหตุ (ระบุพิกัดหรือชื่อสถานที่)">
     <textarea id="details" placeholder="รายละเอียดความช่วยเหลือเพิ่มเติม" rows="4"></textarea>
-    <button onclick="sendData()">ส่งข้อมูล</button>
+    <button id="btnSend" onclick="sendData()">ส่งข้อมูล</button>
 
     <script>
-        // เริ่มต้นใช้งาน LIFF
+        // 1. แก้ LIFF ID ให้เหลือแค่รหัส
+        const YOUR_LIFF_ID = "2008850608-gCaJNTgd"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwGiW13vEERZ8MFKsmf3pXPumkRWvKBxTqCDnkdNpaNS3FL8pvPPnNmscqeK7otjDUY5g/exec";
+
         async function main() {
-            await liff.init({ liffId: "https://liff.line.me/2008850608-gCaJNTgd" });
+            try {
+                await liff.init({ liffId: YOUR_LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                }
+            } catch (err) {
+                console.error("LIFF Init failed", err);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ LINE");
+            }
         }
         main();
 
         async function sendData() {
+            // ป้องกันการกดซ้ำ
+            document.getElementById('btnSend').disabled = true;
+            document.getElementById('btnSend').innerText = "กำลังส่ง...";
+
             const name = document.getElementById('name').value;
             const location = document.getElementById('location').value;
             const details = document.getElementById('details').value;
+            
+            // ดึง UserID (ต้องเช็คว่ามีค่าหรือไม่ ป้องกัน error)
+            let userId = "Guest";
+            try {
+                const context = liff.getContext();
+                if (context && context.userId) {
+                    userId = context.userId;
+                }
+            } catch (e) {}
 
-            // ส่งข้อมูลไปที่ Google Apps Script Web App
-            const response = await fetch('https://script.google.com/macros/s/AKfycbwGiW13vEERZ8MFKsmf3pXPumkRWvKBxTqCDnkdNpaNS3FL8pvPPnNmscqeK7otjDUY5g/exec', {
-                method: 'POST',
-                body: JSON.stringify({
-                    name: name,
-                    location: location,
-                    details: details,
-                    userId: liff.getContext().userId // เก็บ ID ผู้ใช้ไว้เผื่อติดต่อกลับ
-                })
-            });
+            try {
+                // 2. เพิ่ม mode: 'no-cors' และ headers เพื่อแก้ปัญหา Google Script
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        location: location,
+                        details: details,
+                        userId: userId
+                    })
+                });
 
-            if (response.ok) {
+                // 3. แจ้งเตือนสำเร็จ (เมื่อใช้ no-cors เราจะเช็ค response.ok ไม่ได้ ให้สมมติว่าผ่านเลย)
                 alert('ส่งข้อมูลเรียบร้อยแล้ว');
-                liff.closeWindow(); // ปิดหน้าต่าง LIFF ทันทีเมื่อส่งเสร็จ
+                liff.closeWindow();
+
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err);
+                document.getElementById('btnSend').disabled = false;
+                document.getElementById('btnSend').innerText = "ส่งข้อมูล";
             }
         }
     </script>
