@@ -1,68 +1,50 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แจ้งขอความช่วยเหลือ</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f8f9fa; }
-        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; background-color: #00b900; color: white; padding: 14px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:disabled { background-color: #ccc; }
-    </style>
-</head>
-<body>
-    <h3>🆘 แจ้งขอความช่วยเหลือ</h3>
-    <input type="text" id="name" placeholder="ชื่อผู้ประสบภัย">
-    <input type="text" id="location" placeholder="จุดเกิดเหตุ (ระบุพิกัดหรือชื่อสถานที่)">
-    <textarea id="details" placeholder="รายละเอียดความช่วยเหลือเพิ่มเติม" rows="4"></textarea>
-    <button id="btnSend" onclick="sendData()">ส่งข้อมูล</button>
-
-    <script>
-        // 1. แก้ LIFF ID ให้เหลือแค่รหัส
+<script>
+        // 1. LIFF ID ของคุณ
         const YOUR_LIFF_ID = "2008850608-gCaJNTgd"; 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwGiW13vEERZ8MFKsmf3pXPumkRWvKBxTqCDnkdNpaNS3FL8pvPPnNmscqeK7otjDUY5g/exec";
 
+        // เริ่มต้นใช้งาน LIFF
         async function main() {
             try {
                 await liff.init({ liffId: YOUR_LIFF_ID });
-                if (!liff.isLoggedIn()) {
-                    liff.login();
+                
+                // ถ้าเปิดใน External Browser ให้ปุ่มส่งทำงานได้ปกติ แต่จะไม่ Login
+                if (liff.isInClient()) {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    }
                 }
             } catch (err) {
                 console.error("LIFF Init failed", err);
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ LINE");
+                // ไม่ต้อง Alert error ตอนเปิด เพื่อไม่ให้รบกวนผู้ใช้
             }
         }
         main();
 
         async function sendData() {
-            // ป้องกันการกดซ้ำ
-            document.getElementById('btnSend').disabled = true;
-            document.getElementById('btnSend').innerText = "กำลังส่ง...";
+            // ล็อคปุ่มทันทีเพื่อกันกดซ้ำ
+            const btn = document.getElementById('btnSend');
+            btn.disabled = true;
+            btn.innerText = "กำลังส่ง...";
 
             const name = document.getElementById('name').value;
             const location = document.getElementById('location').value;
             const details = document.getElementById('details').value;
             
-            // ดึง UserID (ต้องเช็คว่ามีค่าหรือไม่ ป้องกัน error)
+            // ดึง UserID อย่างปลอดภัย
             let userId = "Guest";
             try {
-                const context = liff.getContext();
-                if (context && context.userId) {
-                    userId = context.userId;
+                // เช็คก่อนว่า LIFF พร้อมใช้งานไหม
+                if (liff.isInClient() && liff.getContext()) {
+                    userId = liff.getContext().userId || "Guest";
                 }
-            } catch (e) {}
+            } catch (e) { console.log(e); }
 
             try {
-                // 2. เพิ่ม mode: 'no-cors' และ headers เพื่อแก้ปัญหา Google Script
                 await fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'no-cors', 
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: name,
                         location: location,
@@ -71,16 +53,26 @@
                     })
                 });
 
-                // 3. แจ้งเตือนสำเร็จ (เมื่อใช้ no-cors เราจะเช็ค response.ok ไม่ได้ ให้สมมติว่าผ่านเลย)
+                // --- ส่วนที่แก้ไขเพื่อแก้ปัญหาปิดหน้าจอไม่ได้ ---
+                
+                // แสดงข้อความเสร็จสิ้น
                 alert('ส่งข้อมูลเรียบร้อยแล้ว');
-                liff.closeWindow();
+
+                // เช็คว่าเปิดอยู่ในแอป LINE หรือไม่
+                if (liff.isInClient()) {
+                    // ปิดหน้าต่างทันที
+                    liff.closeWindow();
+                } else {
+                    // กรณีเปิด browser ข้างนอก ให้รีเฟรชหน้าจอแทน
+                    window.location.reload(); 
+                }
+                // ------------------------------------------
 
             } catch (err) {
                 alert('เกิดข้อผิดพลาด: ' + err);
-                document.getElementById('btnSend').disabled = false;
-                document.getElementById('btnSend').innerText = "ส่งข้อมูล";
+                // คืนค่าปุ่มให้กดใหม่ได้
+                btn.disabled = false;
+                btn.innerText = "ส่งข้อมูล";
             }
         }
     </script>
-</body>
-</html>
