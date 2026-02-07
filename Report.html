@@ -52,7 +52,7 @@ textarea:focus {
 }
 
 textarea {
-  resize: none;          /* 🔒 lock ไม่ให้ปรับ */
+  resize: none;
   min-height: 120px;
 }
 
@@ -107,7 +107,6 @@ button:active {
 
   <textarea id="description" placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
 
-  <!-- สำคัญ: type=button -->
   <button type="button" onclick="sendData()">
     ส่งข้อมูลขอความช่วยเหลือ
   </button>
@@ -118,18 +117,7 @@ button:active {
 </div>
 
 <script>
-const scriptURL =
-"https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
-
-let lat = "", lng = "";
-
-navigator.geolocation.getCurrentPosition(
-  pos => {
-    lat = pos.coords.latitude;
-    lng = pos.coords.longitude;
-  },
-  err => console.warn("GPS not allowed")
-);
+const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
 
 function sendData() {
   const data = new URLSearchParams({
@@ -137,8 +125,6 @@ function sendData() {
     name: document.getElementById("name").value,
     phone: document.getElementById("phone").value,
     location: document.getElementById("location").value,
-    latitude: lat,
-    longitude: lng,
     help_type: document.getElementById("helpType").value,
     description: document.getElementById("description").value
   });
@@ -150,15 +136,13 @@ function sendData() {
     },
     body: data.toString()
   })
-  .then(res => res.text())
-  .then(res => alert("Sent successfully"))
-  .catch(err => console.error(err));
-}
-
+  .then(res => res.json())
+  .then(data => {
     console.log(data);
     if (data.success) {
       alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-
+      
+      // Clear form
       document.querySelectorAll("input, textarea").forEach(el => el.value = "");
       document.getElementById("helpType").value = "";
     } else {
