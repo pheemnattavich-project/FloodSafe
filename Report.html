@@ -139,21 +139,46 @@ function sendData() {
   button.textContent = "กำลังส่ง...";
   button.disabled = true;
 
-  const data = new FormData();
-  data.append('timestamp', new Date().toISOString());
-  data.append('name', name);
-  data.append('phone', phone);
-  data.append('location', location);
-  data.append('help_type', help_type);
-  data.append('description', description);
+  // Create hidden iframe for submission
+  let iframe = document.getElementById('hidden_iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'hidden_iframe';
+    iframe.name = 'hidden_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
 
-  fetch(scriptURL, {
-    method: "POST",
-    body: data
-  })
-  .then(response => response.text())
-  .then(result => {
-    console.log('Success:', result);
+  // Create form dynamically
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = scriptURL;
+  form.target = 'hidden_iframe';
+
+  // Add form fields
+  const fields = {
+    timestamp: new Date().toISOString(),
+    name: name,
+    phone: phone,
+    location: location,
+    help_type: help_type,
+    description: description
+  };
+
+  for (const [key, value] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+
+  // Handle success after short delay
+  setTimeout(() => {
     alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
     
     // Clear form
@@ -163,15 +188,10 @@ function sendData() {
     // Reset button
     button.textContent = originalText;
     button.disabled = false;
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert("❌ ไม่สามารถส่งข้อมูลได้ กรุณาลองอีกครั้ง");
     
-    // Reset button
-    button.textContent = originalText;
-    button.disabled = false;
-  });
+    // Remove temporary form
+    document.body.removeChild(form);
+  }, 1000);
 }
 </script>
 
