@@ -118,30 +118,28 @@ button:active {
 </div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
+const scriptURL =
+"https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
 
-let lat = "";
-let lng = "";
+let lat = "", lng = "";
 
 navigator.geolocation.getCurrentPosition(
   pos => {
     lat = pos.coords.latitude;
     lng = pos.coords.longitude;
   },
-  err => {
-    console.warn("GPS not allowed");
-  }
+  err => console.warn("GPS not allowed")
 );
 
 function sendData() {
   const payload = {
-    name: name.value.trim(),
-    phone: phone.value.trim(),
-    location: location.value.trim(),
-    helpType: helpType.value,
-    description: description.value.trim(),
-    lat: lat,
-    lng: lng
+    name: document.getElementById("name").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    location: document.getElementById("location").value.trim(),
+    helpType: document.getElementById("helpType").value,
+    description: document.getElementById("description").value.trim(),
+    lat,
+    lng
   };
 
   if (!payload.name || !payload.phone || !payload.location) {
@@ -151,17 +149,26 @@ function sendData() {
 
   fetch(scriptURL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(payload)
   })
   .then(res => res.json())
-  .then(() => {
-    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-    helpType.value = "";
+  .then(data => {
+    console.log(data);
+    if (data.success) {
+      alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+
+      document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+      document.getElementById("helpType").value = "";
+    } else {
+      alert("❌ เกิดข้อผิดพลาด");
+    }
   })
   .catch(err => {
-    alert("❌ ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่");
     console.error(err);
+    alert("❌ ไม่สามารถส่งข้อมูลได้");
   });
 }
 </script>
