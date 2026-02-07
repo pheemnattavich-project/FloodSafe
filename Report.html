@@ -1,3 +1,27 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>FloodSafe Report</title>
+</head>
+<body>
+
+<h2>📢 แจ้งเหตุภัยพิบัติ</h2>
+
+<input id="name" placeholder="ชื่อ"><br><br>
+<input id="phone" placeholder="เบอร์โทร"><br><br>
+<input id="location" placeholder="สถานที่"><br><br>
+
+<select id="helpType">
+  <option value="">เลือกประเภทความช่วยเหลือ</option>
+  <option value="น้ำท่วม">น้ำท่วม</option>
+  <option value="ดินถล่ม">ดินถล่ม</option>
+</select><br><br>
+
+<textarea id="description" placeholder="รายละเอียดเพิ่มเติม"></textarea><br><br>
+
+<button onclick="send()">ส่งข้อมูล</button>
+
 <script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
 
@@ -8,18 +32,16 @@ navigator.geolocation.getCurrentPosition(
     lat = pos.coords.latitude;
     lng = pos.coords.longitude;
   },
-  err => {
-    console.warn("ไม่อนุญาตให้ใช้ GPS");
-  }
+  () => console.warn("ไม่อนุญาตให้ใช้ GPS")
 );
 
 function send() {
   const payload = {
-    name: name.value.trim(),
-    phone: phone.value.trim(),
-    location: location.value.trim(),
-    helpType: helpType.value,
-    description: description.value.trim(),
+    name: document.getElementById("name").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    location: document.getElementById("location").value.trim(),
+    helpType: document.getElementById("helpType").value,
+    description: document.getElementById("description").value.trim(),
     lat,
     lng
   };
@@ -31,23 +53,18 @@ function send() {
 
   fetch(scriptURL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"   // ✅ สำคัญมาก
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   })
-  .then(res => res.text())   // 👈 อย่าใช้ res.json()
-  .then(text => {
-    console.log("Response:", text);
+  .then(res => res.text())
+  .then(() => {
     alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-
-    // reset form
     document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-    helpType.value = "";
+    document.getElementById("helpType").value = "";
   })
-  .catch(err => {
-    console.error(err);
-    alert("❌ ส่งข้อมูลไม่สำเร็จ");
-  });
+  .catch(() => alert("❌ ส่งข้อมูลไม่สำเร็จ"));
 }
 </script>
+
+</body>
+</html>
