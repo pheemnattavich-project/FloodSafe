@@ -6,51 +6,90 @@
 <title>แจ้งเหตุภัยน้ำท่วม</title>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(180deg,#e3f2fd,#ffffff);
   margin: 0;
   padding: 20px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(180deg, #e3f2fd, #f9fbff);
 }
 
 .container {
-  max-width: 500px;
+  max-width: 520px;
   margin: auto;
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 15px 40px rgba(25,118,210,0.15);
 }
 
 h2 {
   text-align: center;
   color: #1976d2;
+  margin-bottom: 20px;
 }
 
-input, textarea, select {
+input, select, textarea {
   width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  padding: 14px 16px;
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1.5px solid #d0d7e2;
   font-size: 15px;
+  transition: 0.2s;
+  background: #fdfefe;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,0.15);
+}
+
+textarea {
+  resize: none;          /* 🔒 lock ไม่ให้ปรับ */
+  min-height: 120px;
 }
 
 button {
   width: 100%;
-  margin-top: 15px;
-  padding: 14px;
-  border-radius: 12px;
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 16px;
   border: none;
-  background: #1976d2;
-  color: #fff;
-  font-size: 16px;
-  font-weight: bold;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(25,118,210,0.35);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #789;
 }
 </style>
 </head>
 
 <body>
+
 <div class="container">
   <h2>🚨 แจ้งเหตุภัยน้ำท่วม</h2>
 
@@ -66,37 +105,66 @@ button {
     <option>อื่น ๆ</option>
   </select>
 
-  <textarea id="description" rows="4"
-    placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
+  <textarea id="description" placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
 
-  <button onclick="send()">ส่งข้อมูลขอความช่วยเหลือ</button>
+  <!-- สำคัญ: type=button -->
+  <button type="button" onclick="sendData()">
+    ส่งข้อมูลขอความช่วยเหลือ
+  </button>
+
+  <div class="footer-note">
+    ข้อมูลจะถูกส่งถึงเจ้าหน้าที่ทันที
+  </div>
 </div>
 
 <script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
-let lat = "", lng = "";
 
-navigator.geolocation.getCurrentPosition(pos => {
-  lat = pos.coords.latitude;
-  lng = pos.coords.longitude;
-});
+let lat = "";
+let lng = "";
 
-function send() {
+navigator.geolocation.getCurrentPosition(
+  pos => {
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  },
+  err => {
+    console.warn("GPS not allowed");
+  }
+);
+
+function sendData() {
+  const payload = {
+    name: name.value.trim(),
+    phone: phone.value.trim(),
+    location: location.value.trim(),
+    helpType: helpType.value,
+    description: description.value.trim(),
+    lat: lat,
+    lng: lng
+  };
+
+  if (!payload.name || !payload.phone || !payload.location) {
+    alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+    return;
+  }
+
   fetch(scriptURL, {
     method: "POST",
-    body: JSON.stringify({
-      name: name.value,
-      phone: phone.value,
-      location: location.value,
-      lat: lat,
-      lng: lng,
-      helpType: helpType.value,
-      description: description.value
-    })
-  }).then(() => {
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(() => {
     alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+    helpType.value = "";
+  })
+  .catch(err => {
+    alert("❌ ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่");
+    console.error(err);
   });
 }
 </script>
+
 </body>
 </html>
