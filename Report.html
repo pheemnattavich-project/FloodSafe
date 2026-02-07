@@ -119,7 +119,7 @@ button:active {
 
 <script>
 const scriptURL =
-"https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
+"https://script.google.com/macros/s/AKfycbwenF_7Xg52L7XQwggUr3CRobuel2E9RarTECm949LPePP-BOCXED_xNnL3RViFC9Cv-Q/exec";
 
 let lat = "", lng = "";
 
@@ -132,31 +132,29 @@ navigator.geolocation.getCurrentPosition(
 );
 
 function sendData() {
-  const payload = {
-    name: document.getElementById("name").value.trim(),
-    phone: document.getElementById("phone").value.trim(),
-    location: document.getElementById("location").value.trim(),
-    helpType: document.getElementById("helpType").value,
-    description: document.getElementById("description").value.trim(),
-    lat,
-    lng
-  };
+  const data = new URLSearchParams({
+    timestamp: new Date().toISOString(),
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    location: document.getElementById("location").value,
+    latitude: lat,
+    longitude: lng,
+    help_type: document.getElementById("helpType").value,
+    description: document.getElementById("description").value
+  });
 
-  if (!payload.name || !payload.phone || !payload.location) {
-    alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-    return;
-  }
-
-  fetch(scriptURL, {
+  fetch("https://script.google.com/macros/s/AKfycbwenF_7Xg52L7XQwggUr3CRobuel2E9RarTECm949LPePP-BOCXED_xNnL3RViFC9Cv-Q/exec", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/x-www-form-urlencoded"
     },
-    body: JSON.stringify(payload)
+    body: data.toString()
   })
+  .then(res => res.text())
+  .then(res => alert("Sent successfully"))
+  .catch(err => console.error(err));
+}
 
-  .then(res => res.json())
-  .then(data => {
     console.log(data);
     if (data.success) {
       alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
