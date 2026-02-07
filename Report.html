@@ -120,38 +120,57 @@ button:active {
 const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
 
 function sendData() {
-  const data = new URLSearchParams({
-    timestamp: new Date().toISOString(),
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    location: document.getElementById("location").value,
-    help_type: document.getElementById("helpType").value,
-    description: document.getElementById("description").value
-  });
+  // Get form values
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const location = document.getElementById("location").value;
+  const help_type = document.getElementById("helpType").value;
+  const description = document.getElementById("description").value;
+
+  // Validate required fields
+  if (!name || !phone || !location || !help_type) {
+    alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+    return;
+  }
+
+  // Show loading state
+  const button = document.querySelector("button");
+  const originalText = button.textContent;
+  button.textContent = "กำลังส่ง...";
+  button.disabled = true;
+
+  const data = new FormData();
+  data.append('timestamp', new Date().toISOString());
+  data.append('name', name);
+  data.append('phone', phone);
+  data.append('location', location);
+  data.append('help_type', help_type);
+  data.append('description', description);
 
   fetch(scriptURL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: data.toString()
+    body: data
   })
-  .then(res => res.json())
-  .then(data => {
-    console.log(data);
-    if (data.success) {
-      alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-      
-      // Clear form
-      document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-      document.getElementById("helpType").value = "";
-    } else {
-      alert("❌ เกิดข้อผิดพลาด");
-    }
+  .then(response => response.text())
+  .then(result => {
+    console.log('Success:', result);
+    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+    
+    // Clear form
+    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+    document.getElementById("helpType").value = "";
+    
+    // Reset button
+    button.textContent = originalText;
+    button.disabled = false;
   })
-  .catch(err => {
-    console.error(err);
-    alert("❌ ไม่สามารถส่งข้อมูลได้");
+  .catch(error => {
+    console.error('Error:', error);
+    alert("❌ ไม่สามารถส่งข้อมูลได้ กรุณาลองอีกครั้ง");
+    
+    // Reset button
+    button.textContent = originalText;
+    button.disabled = false;
   });
 }
 </script>
