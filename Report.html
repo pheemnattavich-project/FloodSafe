@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แจ้งเหตุภัยน้ำท่วม</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(180deg,#e3f2fd,#ffffff);
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+  color: #1976d2;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #1976d2;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h2>🚨 แจ้งเหตุภัยน้ำท่วม</h2>
+
+  <input id="name" placeholder="ชื่อ - นามสกุล">
+  <input id="phone" placeholder="เบอร์โทรศัพท์">
+  <input id="location" placeholder="พื้นที่ / ที่อยู่ปัจจุบัน">
+
+  <select id="helpType">
+    <option value="">ต้องการความช่วยเหลือด้านใด</option>
+    <option>อาหาร / น้ำดื่ม</option>
+    <option>อพยพ</option>
+    <option>การแพทย์</option>
+    <option>อื่น ๆ</option>
+  </select>
+
+  <textarea id="description" rows="4"
+    placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
+
+  <button onclick="send()">ส่งข้อมูลขอความช่วยเหลือ</button>
+</div>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
+let lat = "", lng = "";
+
+navigator.geolocation.getCurrentPosition(pos => {
+  lat = pos.coords.latitude;
+  lng = pos.coords.longitude;
+});
+
+function send() {
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({
+      name: name.value,
+      phone: phone.value,
+      location: location.value,
+      lat: lat,
+      lng: lng,
+      helpType: helpType.value,
+      description: description.value
+    })
+  }).then(() => {
+    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+  });
+}
+</script>
+</body>
+</html>
