@@ -2,67 +2,230 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ขอความช่วยเหลือ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แจ้งเหตุภัยน้ำท่วม</title>
 
-<!-- LIFF SDK -->
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(180deg, #e3f2fd, #f9fbff);
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 15px 40px rgba(25,118,210,0.15);
+}
+
+h2 {
+  text-align: center;
+  color: #1976d2;
+  margin-bottom: 20px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1.5px solid #d0d7e2;
+  font-size: 15px;
+  transition: 0.2s;
+  background: #fdfefe;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,0.15);
+}
+
+textarea {
+  resize: none;
+  min-height: 120px;
+}
+
+button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(25,118,210,0.35);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #789;
+}
+</style>
 </head>
 
 <body>
 
-<h2>🆘 ขอความช่วยเหลือ</h2>
+<div class="container">
+  <h2>🚨 แจ้งเหตุภัยน้ำท่วม</h2>
 
-<form onsubmit="sendData(event)">
-  <input type="text" id="name" placeholder="ชื่อผู้แจ้ง" required><br><br>
-  <textarea id="detail" placeholder="รายละเอียด" required></textarea><br><br>
-  <button type="submit">📤 ส่งข้อมูล</button>
-</form>
+  <input id="name" placeholder="ชื่อ - นามสกุล">
+  <input id="phone" placeholder="เบอร์โทรศัพท์">
+  <input id="location" placeholder="พื้นที่ / ที่อยู่ปัจจุบัน">
 
-<button onclick="backToLine()">⬅ กลับเข้า LINE</button>
+  <select id="helpType">
+    <option value="">ต้องการความช่วยเหลือด้านใด</option>
+    <option>อาหาร / น้ำดื่ม</option>
+    <option>อพยพ</option>
+    <option>การแพทย์</option>
+    <option>อื่น ๆ</option>
+  </select>
+
+  <textarea id="description" placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
+
+  <button type="button" onclick="sendData()">
+    ส่งข้อมูลขอความช่วยเหลือ
+  </button>
+
+  <div class="footer-note">
+    ข้อมูลจะถูกส่งถึงเจ้าหน้าที่ทันที
+  </div>
+</div>
 
 <script>
-async function init() {
-  await liff.init({ liffId: "2008850608-gCaJNTgd" });
-}
-init();
+const scriptURL = "https://script.google.com/macros/s/AKfycbwGiW13vEERZ8MFKsmf3pXPumkRWvKBxTqCDnkdNpaNS3FL8pvPPnNmscqeK7otjDUY5g/exec";
+// 🔴 นำ URL ที่ได้จากการ Deploy ใหม่ มาวางแทนที่ตรงนี้
+const scriptURL = "https://script.google.com/macros/s/AKfycbyborsFYfMIoXs_-diPuELun87t5daIjfP7fFVCZWNdXikK6lNGi4i424o-nQoYF0Gaew/exec";
 
-function sendData(e){
-  e.preventDefault();
+function sendData() {
+  // Get form values
+  // 1. ดึงค่าจากช่องต่างๆ
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const location = document.getElementById("location").value;
+  const help_type = document.getElementById("helpType").value;
+  const helpType = document.getElementById("helpType").value;
+  const description = document.getElementById("description").value;
 
-  fetch("https://script.google.com/macros/s/AKfycbwlKjkkCcyCdqktuUHTvduPeFUmVE9-Tb8E61LRNg79pGLO0rlObaJNXsGh9iMydZVISQ/exec",{
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: document.getElementById("name").value,
-      detail: document.getElementById("detail").value
-    })
+  // Validate required fields
+  if (!name || !phone || !location || !help_type) {
+  // 2. ตรวจสอบว่ากรอกครบไหม
+  if (!name || !phone || !location || !helpType) {
+    alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+    return;
+  }
+
+  // Show loading state
+  // 3. เปลี่ยนปุ่มเป็นสถานะกำลังส่ง
+  const button = document.querySelector("button");
+  const originalText = button.textContent;
+  button.textContent = "กำลังส่ง...";
+  button.disabled = true;
+
+  // Create hidden iframe for submission
+  let iframe = document.getElementById('hidden_iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'hidden_iframe';
+    iframe.name = 'hidden_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+
+  // Create form dynamically
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = scriptURL;
+  form.target = 'hidden_iframe';
+
+  // Add form fields
+  const fields = {
+    timestamp: new Date().toISOString(),
+  // 4. เตรียมข้อมูลเป็นก้อน Object
+  const data = {
+    name: name,
+    phone: phone,
+    location: location,
+    help_type: help_type,
+    helpType: helpType,
+    description: description
+  };
+
+  for (const [key, value] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
+
+  // Handle success after short delay
+  setTimeout(() => {
+  // 5. ส่งข้อมูลด้วย fetch (ส่งเป็น JSON)
+  fetch(scriptURL, {
+    method: 'POST',
+    body: JSON.stringify(data), // แปลงเป็นข้อความ JSON
+    mode: 'no-cors' // สำคัญ: ป้องกัน Browser บล็อกการส่งข้ามโดเมน
   })
-  .then(res => res.text())
   .then(() => {
-    alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
-    liff.closeWindow();   // กลับ LINE
+    // เมื่อส่งสำเร็จ
+    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+
+    // Clear form
+    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+    // ล้างค่าในฟอร์ม
+    document.getElementById("name").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("location").value = "";
+    document.getElementById("helpType").value = "";
+    document.getElementById("description").value = "";
+
+    // Reset button
+    // คืนค่าปุ่ม
+    button.textContent = originalText;
+    button.disabled = false;
+    
+    // Remove temporary form
+    document.body.removeChild(form);
+  }, 1000);
   })
-  .catch(err => {
-    alert("ส่งข้อมูลไม่สำเร็จ ❌");
-    console.error(err);
+  .catch(error => {
+    // กรณี error
+    console.error('Error!', error.message);
+    alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล โปรดลองใหม่");
+    button.textContent = originalText;
+    button.disabled = false;
   });
 }
-
-function backToLine(){
-  if (liff.isInClient()) {
-    liff.closeWindow();
-  } else {
-    window.location.href = "index.html";
-  }
-}
 </script>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script>
-liff.init({ liffId: "2008850608-gCaJNTgd" });
-</script>
-
 
 </body>
 </html>
