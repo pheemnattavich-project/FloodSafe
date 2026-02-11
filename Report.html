@@ -1,63 +1,52 @@
-<script>
-// 🔴 นำ URL ที่ได้จากการ Deploy ใหม่ มาวางแทนที่ตรงนี้
-const scriptURL = "https://script.google.com/macros/s/AKfycbxrR0tFmePOYikce7Yfk36bQmxY-7ma4vBGvyqUOp0IKSYOZNf9gOGaZCMpNV0T2fyloQ/exec";
+```<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyIzkEeR_RETfPGl2D5Tvd0JXA6aH5NPK9GilCNbghNQjyfSexIE95cJRbpjY8t-j5H0A/exec";
 
-function sendData() {
-  // 1. ดึงค่าจากช่องต่างๆ
+async function sendData() {
   const name = document.getElementById("name").value;
   const phone = document.getElementById("phone").value;
   const location = document.getElementById("location").value;
   const helpType = document.getElementById("helpType").value;
   const description = document.getElementById("description").value;
 
-  // 2. ตรวจสอบว่ากรอกครบไหม
   if (!name || !phone || !location || !helpType) {
-    alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+    alert(":x: กรุณากรอกข้อมูลให้ครบถ้วน");
     return;
   }
 
-  // 3. เปลี่ยนปุ่มเป็นสถานะกำลังส่ง
   const button = document.querySelector("button");
   const originalText = button.textContent;
   button.textContent = "กำลังส่ง...";
   button.disabled = true;
 
-  // 4. เตรียมข้อมูลเป็นก้อน Object
-  const data = {
-    name: name,
-    phone: phone,
-    location: location,
-    helpType: helpType,
-    description: description
-  };
+  const data = { name, phone, location, helpType, description };
 
-  // 5. ส่งข้อมูลด้วย fetch (ส่งเป็น JSON)
-  fetch(scriptURL, {
-    method: 'POST',
-    body: JSON.stringify(data), // แปลงเป็นข้อความ JSON
-    mode: 'no-cors' // สำคัญ: ป้องกัน Browser บล็อกการส่งข้ามโดเมน
-  })
-  .then(() => {
-    // เมื่อส่งสำเร็จ
-    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-    
-    // ล้างค่าในฟอร์ม
+  try {
+    const res = await fetch(scriptURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (result.result !== "success") {
+      throw new Error(result.message || "Unknown error");
+    }
+
+    alert(":white_check_mark: ส่งข้อมูลเรียบร้อยแล้ว");
+
     document.getElementById("name").value = "";
     document.getElementById("phone").value = "";
     document.getElementById("location").value = "";
     document.getElementById("helpType").value = "";
     document.getElementById("description").value = "";
-    
-    // คืนค่าปุ่ม
+
+  } catch (err) {
+    console.error(err);
+    alert(":x: ส่งไม่สำเร็จ: " + err.message);
+  } finally {
     button.textContent = originalText;
     button.disabled = false;
-  })
-  .catch(error => {
-    // กรณี error
-    console.error('Error!', error.message);
-    alert("❌ เกิดข้อผิดพลาดในการส่งข้อมูล โปรดลองใหม่");
-    button.textContent = originalText;
-    button.disabled = false;
-  });
+  }
 }
-</script>
+</script>```
