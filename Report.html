@@ -1,29 +1,125 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>FloodSafe Report</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แจ้งเหตุภัยน้ำท่วม</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(180deg, #e3f2fd, #f9fbff);
+}
+
+.container {
+  max-width: 520px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 15px 40px rgba(25,118,210,0.15);
+}
+
+h2 {
+  text-align: center;
+  color: #1976d2;
+  margin-bottom: 20px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1.5px solid #d0d7e2;
+  font-size: 15px;
+  transition: 0.2s;
+  background: #fdfefe;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,0.15);
+}
+
+textarea {
+  resize: none;          /* 🔒 lock ไม่ให้ปรับ */
+  min-height: 120px;
+}
+
+button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(25,118,210,0.35);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #789;
+}
+</style>
 </head>
+
 <body>
 
-<h2>📢 แจ้งเหตุภัยพิบัติ</h2>
+<div class="container">
+  <h2>🚨 แจ้งเหตุภัยน้ำท่วม</h2>
 
-<input id="name" placeholder="ชื่อ"><br><br>
-<input id="phone" placeholder="เบอร์โทร"><br><br>
-<input id="location" placeholder="สถานที่"><br><br>
+  <input id="name" placeholder="ชื่อ - นามสกุล">
+  <input id="phone" placeholder="เบอร์โทรศัพท์">
+  <input id="location" placeholder="พื้นที่ / ที่อยู่ปัจจุบัน">
 
-<select id="helpType">
-  <option value="">เลือกประเภทความช่วยเหลือ</option>
-  <option value="น้ำท่วม">น้ำท่วม</option>
-  <option value="ดินถล่ม">ดินถล่ม</option>
-</select><br><br>
+  <select id="helpType">
+    <option value="">ต้องการความช่วยเหลือด้านใด</option>
+    <option>อาหาร / น้ำดื่ม</option>
+    <option>อพยพ</option>
+    <option>การแพทย์</option>
+    <option>อื่น ๆ</option>
+  </select>
 
-<textarea id="description" placeholder="รายละเอียดเพิ่มเติม"></textarea><br><br>
+  <textarea id="description" placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
 
-<button onclick="send()">ส่งข้อมูล</button>
+  <!-- สำคัญ: type=button -->
+  <button type="button" onclick="sendData()">
+    ส่งข้อมูลขอความช่วยเหลือ
+  </button>
+
+  <div class="footer-note">
+    ข้อมูลจะถูกส่งถึงเจ้าหน้าที่ทันที
+  </div>
+</div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
+const scriptURL =
+"https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
 
 let lat = "", lng = "";
 
@@ -32,38 +128,48 @@ navigator.geolocation.getCurrentPosition(
     lat = pos.coords.latitude;
     lng = pos.coords.longitude;
   },
-  () => console.warn("ไม่อนุญาตให้ใช้ GPS")
+  err => console.warn("GPS not allowed")
 );
 
-function send() {
-  const payload = {
-    name: document.getElementById("name").value.trim(),
-    phone: document.getElementById("phone").value.trim(),
-    location: document.getElementById("location").value.trim(),
-    helpType: document.getElementById("helpType").value,
-    description: document.getElementById("description").value.trim(),
-    lat,
-    lng
-  };
-
-  if (!payload.name || !payload.phone || !payload.location) {
-    alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-    return;
-  }
+function sendData() {
+  const data = new URLSearchParams({
+    timestamp: new Date().toISOString(),
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    location: document.getElementById("location").value,
+    latitude: lat,
+    longitude: lng,
+    help_type: document.getElementById("helpType").value,
+    description: document.getElementById("description").value
+  });
 
   fetch(scriptURL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: data.toString()
   })
   .then(res => res.text())
-  .then(() => {
-    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-    document.getElementById("helpType").value = "";
-  })
-  .catch(() => alert("❌ ส่งข้อมูลไม่สำเร็จ"));
+  .then(res => alert("Sent successfully"))
+  .catch(err => console.error(err));
 }
+
+    console.log(data);
+    if (data.success) {
+      alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+
+      document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+      document.getElementById("helpType").value = "";
+    } else {
+      alert("❌ เกิดข้อผิดพลาด");
+    }
+    
+    .catch(err => {
+    console.error(err);
+    alert("❌ ไม่สามารถส่งข้อมูลได้");
+    });
+  
 </script>
 
 </body>
