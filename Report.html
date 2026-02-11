@@ -127,7 +127,7 @@ async function sendData() {
   const description = document.getElementById("description").value;
 
   if (!name || !phone || !location || !helpType) {
-    alert(":x: กรุณากรอกข้อมูลให้ครบถ้วน");
+    alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
     return;
   }
 
@@ -139,30 +139,29 @@ async function sendData() {
   const data = { name, phone, location, helpType, description };
 
   try {
-    const res = await fetch(scriptURL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+  await fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors",  
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
 
-    const result = await res.json();
+  // With no-cors, we can't read the response.
+  // If no error thrown, assume success.
+  alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
 
-    if (result.result !== "success") {
-      throw new Error(result.message || "Unknown error");
-    }
+  document.getElementById("name").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("helpType").value = "";
+  document.getElementById("description").value = "";
 
-    alert(":white_check_mark: ส่งข้อมูลเรียบร้อยแล้ว");
-
-    document.getElementById("name").value = "";
-    document.getElementById("phone").value = "";
-    document.getElementById("location").value = "";
-    document.getElementById("helpType").value = "";
-    document.getElementById("description").value = "";
-
-  } catch (err) {
-    console.error(err);
-    alert(":x: ส่งไม่สำเร็จ: " + err.message);
-  } finally {
+} catch (err) {
+  console.error(err);
+  alert("❌ ส่งไม่สำเร็จ");
+} finally {
     button.textContent = originalText;
     button.disabled = false;
   }
