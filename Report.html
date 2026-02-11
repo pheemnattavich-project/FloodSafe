@@ -52,7 +52,7 @@ textarea:focus {
 }
 
 textarea {
-  resize: none;          /* 🔒 lock ไม่ให้ปรับ */
+  resize: none;
   min-height: 120px;
 }
 
@@ -107,7 +107,6 @@ button:active {
 
   <textarea id="description" placeholder="อธิบายสถานการณ์เพิ่มเติม"></textarea>
 
-  <!-- สำคัญ: type=button -->
   <button type="button" onclick="sendData()">
     ส่งข้อมูลขอความช่วยเหลือ
   </button>
@@ -118,58 +117,82 @@ button:active {
 </div>
 
 <script>
-const scriptURL =
-"https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
-
-let lat = "", lng = "";
-
-navigator.geolocation.getCurrentPosition(
-  pos => {
-    lat = pos.coords.latitude;
-    lng = pos.coords.longitude;
-  },
-  err => console.warn("GPS not allowed")
-);
+const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
 
 function sendData() {
-  const data = new URLSearchParams({
+  // Get form values
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const location = document.getElementById("location").value;
+  const help_type = document.getElementById("helpType").value;
+  const description = document.getElementById("description").value;
+
+  // Validate required fields
+  if (!name || !phone || !location || !help_type) {
+    alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+    return;
+  }
+
+  // Show loading state
+  const button = document.querySelector("button");
+  const originalText = button.textContent;
+  button.textContent = "กำลังส่ง...";
+  button.disabled = true;
+
+  // Create hidden iframe for submission
+  let iframe = document.getElementById('hidden_iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'hidden_iframe';
+    iframe.name = 'hidden_iframe';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+  }
+
+  // Create form dynamically
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = scriptURL;
+  form.target = 'hidden_iframe';
+
+  // Add form fields
+  const fields = {
     timestamp: new Date().toISOString(),
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    location: document.getElementById("location").value,
-    latitude: lat,
-    longitude: lng,
-    help_type: document.getElementById("helpType").value,
-    description: document.getElementById("description").value
-  });
+    name: name,
+    phone: phone,
+    location: location,
+    help_type: help_type,
+    description: description
+  };
 
-  fetch(scriptURL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: data.toString()
-  })
-  .then(res => res.text())
-  .then(res => alert("Sent successfully"))
-  .catch(err => console.error(err));
-}
+  for (const [key, value] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  }
 
-    console.log(data);
-    if (data.success) {
-      alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+  // Submit form
+  document.body.appendChild(form);
+  form.submit();
 
-      document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-      document.getElementById("helpType").value = "";
-    } else {
-      alert("❌ เกิดข้อผิดพลาด");
-    }
+  // Handle success after short delay
+  setTimeout(() => {
+    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
     
-    .catch(err => {
-    console.error(err);
-    alert("❌ ไม่สามารถส่งข้อมูลได้");
-    });
-  
+    // Clear form
+    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
+    document.getElementById("helpType").value = "";
+    
+    // Reset button
+    button.textContent = originalText;
+    button.disabled = false;
+    
+    // Remove temporary form
+    document.body.removeChild(form);
+  }, 1000);
+}
 </script>
 
 </body>
