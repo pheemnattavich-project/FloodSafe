@@ -115,83 +115,56 @@ button:active {
     ข้อมูลจะถูกส่งถึงเจ้าหน้าที่ทันที
   </div>
 </div>
-
+  
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyJjx7WWFFPP6R0akKxmsfxGSg4vOfAxRUJ8bpnHiQ198OPeDxm0vVHDMo_6ZEwAP95/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyIzkEeR_RETfPGl2D5Tvd0JXA6aH5NPK9GilCNbghNQjyfSexIE95cJRbpjY8t-j5H0A/exec";
 
-function sendData() {
-  // Get form values
+async function sendData() {
   const name = document.getElementById("name").value;
   const phone = document.getElementById("phone").value;
   const location = document.getElementById("location").value;
-  const help_type = document.getElementById("helpType").value;
+  const helpType = document.getElementById("helpType").value;
   const description = document.getElementById("description").value;
 
-  // Validate required fields
-  if (!name || !phone || !location || !help_type) {
+  if (!name || !phone || !location || !helpType) {
     alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
     return;
   }
 
-  // Show loading state
   const button = document.querySelector("button");
   const originalText = button.textContent;
   button.textContent = "กำลังส่ง...";
   button.disabled = true;
 
-  // Create hidden iframe for submission
-  let iframe = document.getElementById('hidden_iframe');
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id = 'hidden_iframe';
-    iframe.name = 'hidden_iframe';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-  }
+  const data = { name, phone, location, helpType, description };
 
-  // Create form dynamically
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = scriptURL;
-  form.target = 'hidden_iframe';
+  try {
+  await fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors",  
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
 
-  // Add form fields
-  const fields = {
-    timestamp: new Date().toISOString(),
-    name: name,
-    phone: phone,
-    location: location,
-    help_type: help_type,
-    description: description
-  };
+  // With no-cors, we can't read the response.
+  // If no error thrown, assume success.
+  alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
 
-  for (const [key, value] of Object.entries(fields)) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = value;
-    form.appendChild(input);
-  }
+  document.getElementById("name").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("helpType").value = "";
+  document.getElementById("description").value = "";
 
-  // Submit form
-  document.body.appendChild(form);
-  form.submit();
-
-  // Handle success after short delay
-  setTimeout(() => {
-    alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
-    
-    // Clear form
-    document.querySelectorAll("input, textarea").forEach(el => el.value = "");
-    document.getElementById("helpType").value = "";
-    
-    // Reset button
+} catch (err) {
+  console.error(err);
+  alert("❌ ส่งไม่สำเร็จ");
+} finally {
     button.textContent = originalText;
     button.disabled = false;
-    
-    // Remove temporary form
-    document.body.removeChild(form);
-  }, 1000);
+  }
 }
 </script>
 
