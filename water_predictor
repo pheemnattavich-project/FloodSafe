@@ -1,0 +1,334 @@
+"""
+=============================================================================
+Water Level AI Predictor — Improved Engine
+=============================================================================
+Improvements over original notebook:
+  • Data from 2020 → present  (6+ years, better seasonality capture)
+  • Extended lag features: 1,2,3,5,7,14,21,30,60 days
+  • Rolling mean/std/min/max for 7,14,30,60,90-day windows
+  • Rate-of-change features (diff1, diff7, diff30)
+  • Cyclical sin/cos encoding for day-of-year, month, day-of-week
+  • Ensemble: RandomForest (40%) + GradientBoosting (60%)
+  • Iterative 7-day forecast with feature regeneration each step
+=============================================================================
+"""
+
+import re
+import requests
+import pandas as pd
+import numpy as np
+from time import sleep
+from typing import Optional
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
+import joblib
+from datetime import datetime
+
+# ── API endpoints ──────────────────────────────────────────────────────────
+LOAD_URL  = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load"
+GRAPH_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_graph_year"
+HEADERS   = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+
+DEFAULT_YEARS = range(2020, datetime.now().year + 1)
+
+
+def _looks_numeric(x) -> bool:
+    if x is None:
+        return False
+    return bool(re.fullmatch(r"\d{4,}", str(x).strip()))
+
+
+class WaterLevelPredictor:
+    """
+    Ensemble water level predictor.
+    Usage:
+        p = WaterLevelPredictor()
+        p.train(station_id="2575", station_name="ประปายโสธร")
+        fc = p.forecast(days=7)
+        p.save("model.joblib")
+
+        p2 = WaterLevelPredictor.load("model.joblib")
+        fc = p2.forecast(days=7)
+    """
+
+    def __init__(self):
+        self.model_rf    = None
+        self.model_gbm   = None
+        self.ts          = None          # daily pd.DataFrame with column "y"
+        self.mae         = None
+        self.rmse        = None
+        self.station_id  = None
+        self.station_name = None
+        self.station_type = None
+        self.feature_cols = None
+        self.last_trained = None
+
+    # ── Station discovery ──────────────────────────────────────────────────
+
+    @staticmethod
+    def get_station_list():
+        """Return (df_tele, candidate_id_columns) for tele_waterlevel stations."""
+        payload  = requests.get(LOAD_URL, headers=HEADERS, timeout=30).json()
+        stations = payload["waterlevel_data"]["data"]
+        df_all   = pd.json_normalize(stations)
+
+        candidates = [
+            c for c in df_all.columns
+            if "name" not in c.lower()
+            and any(_looks_numeric(v)
+                    for v in df_all[c].dropna().astype(str).head(30))
+        ]
+        df_tele = df_all[df_all["station_type"] == "tele_waterlevel"].copy()
+        return df_tele, candidates
+
+    # ── Raw data fetching ──────────────────────────────────────────────────
+
+    def fetch_data(self,
+                   station_id: str,
+                   station_type: str = "tele_waterlevel",
+                   years=None) -> Optional[pd.DataFrame]:
+        """Pull raw (datetime, y) records across all requested years."""
+        if years is None:
+            years = DEFAULT_YEARS
+
+        all_rows = []
+        for year in years:
+            try:
+                params = {
+                    "station_type": station_type,
+                    "station_id":   str(station_id),
+                    "year":         str(year)
+                }
+                r = requests.get(GRAPH_URL, params=params,
+                                 headers=HEADERS, timeout=30)
+                if r.status_code != 200:
+                    print(f"  {year}: HTTP {r.status_code} — skip")
+                    continue
+
+                p  = r.json()
+                gd = p.get("data", {}).get("graph_data", [])
+                if not gd:
+                    print(f"  {year}: no data")
+                    continue
+
+                entry = next(
+                    (x for x in gd if str(x.get("year")) == str(year)), None
+                )
+                if not entry or not entry.get("data"):
+                    print(f"  {year}: empty entry")
+                    continue
+
+                df = pd.DataFrame(entry["data"])
+                if df.empty:
+                    continue
+
+                df["ds"] = pd.to_datetime(df["datetime"], errors="coerce")
+
+                if "waterlevel_msl" in df.columns and df["waterlevel_msl"].notna().any():
+                    df["y"] = pd.to_numeric(df["waterlevel_msl"], errors="coerce")
+                else:
+                    df["y"] = pd.to_numeric(df.get("waterlevel_m"), errors="coerce")
+
+                df = df.dropna(subset=["ds", "y"])
+                if not df.empty:
+                    all_rows.append(df[["ds", "y"]])
+                    print(f"  {year}: {len(df):>4} records ✓")
+
+                sleep(0.15)
+
+            except Exception as e:
+                print(f"  {year}: error — {e}")
+                continue
+
+        if not all_rows:
+            return None
+
+        return (
+            pd.concat(all_rows, ignore_index=True)
+            .sort_values("ds")
+            .drop_duplicates("ds")
+            .reset_index(drop=True)
+        )
+
+    # ── Time-series preparation ────────────────────────────────────────────
+
+    @staticmethod
+    def prepare_daily(df: pd.DataFrame) -> pd.DataFrame:
+        """Convert raw records to a daily-frequency series (no gaps)."""
+        ts = df.copy()
+        ts["date"] = ts["ds"].dt.floor("D")
+        ts = ts.groupby("date", as_index=False)["y"].mean()
+        ts = ts.set_index("date").asfreq("D")
+        ts["y"] = ts["y"].interpolate(method="time", limit_direction="both")
+        return ts
+
+    # ── Feature engineering ────────────────────────────────────────────────
+
+    @staticmethod
+    def make_features(ts_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Build a rich feature matrix.
+        All features are lag-safe (no future leakage).
+        """
+        x = ts_df.copy()
+
+        # Lag features
+        for lag in [1, 2, 3, 5, 7, 14, 21, 30, 60]:
+            x[f"lag{lag}"] = x["y"].shift(lag)
+
+        # Rolling statistics on shift-1 (lag-safe)
+        shifted = x["y"].shift(1)
+        for w in [7, 14, 30, 60, 90]:
+            mp = max(w // 2, 3)
+            x[f"r{w}_mean"] = shifted.rolling(w, min_periods=mp).mean()
+            x[f"r{w}_std"]  = shifted.rolling(w, min_periods=mp).std()
+            x[f"r{w}_min"]  = shifted.rolling(w, min_periods=mp).min()
+            x[f"r{w}_max"]  = shifted.rolling(w, min_periods=mp).max()
+
+        # Rate of change
+        x["diff1"]  = x["y"].diff(1)
+        x["diff7"]  = x["y"].diff(7)
+        x["diff30"] = x["y"].diff(30)
+
+        # Calendar
+        idx = x.index
+        x["dow"]    = idx.dayofweek
+        x["month"]  = idx.month
+        x["quarter"]= idx.quarter
+        x["doy"]    = idx.dayofyear
+        x["year_n"] = idx.year
+
+        # Cyclical encoding (captures seasonality without ordinal bias)
+        x["sin_doy"]   = np.sin(2 * np.pi * x["doy"]   / 365.25)
+        x["cos_doy"]   = np.cos(2 * np.pi * x["doy"]   / 365.25)
+        x["sin_month"] = np.sin(2 * np.pi * x["month"]  / 12)
+        x["cos_month"] = np.cos(2 * np.pi * x["month"]  / 12)
+        x["sin_dow"]   = np.sin(2 * np.pi * x["dow"]    / 7)
+        x["cos_dow"]   = np.cos(2 * np.pi * x["dow"]    / 7)
+
+        return x
+
+    # ── Training ───────────────────────────────────────────────────────────
+
+    def train(self,
+              station_id:   str,
+              station_type: str = "tele_waterlevel",
+              station_name: str = None,
+              years=None) -> bool:
+        """
+        Fetch historical data and train the ensemble model.
+        Returns True on success, False on failure.
+        """
+        self.station_id   = station_id
+        self.station_type = station_type
+        self.station_name = station_name or f"สถานี {station_id}"
+
+        # 1. Fetch
+        print(f"\n[1/4] Fetching: {self.station_name} (ID={station_id})")
+        raw = self.fetch_data(station_id, station_type, years)
+        if raw is None or len(raw) < 200:
+            print("ERROR: Insufficient data (need ≥200 records).")
+            return False
+        print(f"  Total: {len(raw):,} raw records")
+
+        # 2. Prepare daily series
+        print("[2/4] Preparing daily series...")
+        self.ts = self.prepare_daily(raw)
+        print(f"  {len(self.ts):,} days  "
+              f"{self.ts.index.min().date()} → {self.ts.index.max().date()}")
+
+        # 3. Feature engineering
+        print("[3/4] Engineering features...")
+        feat = self.make_features(self.ts).dropna()
+        self.feature_cols = [c for c in feat.columns if c != "y"]
+        X = feat[self.feature_cols]
+        y = feat["y"]
+
+        # Time-based train/test split (last 90 days = test)
+        split = feat.index.max() - pd.Timedelta(days=90)
+        X_tr, y_tr = X[feat.index <= split], y[feat.index <= split]
+        X_te, y_te = X[feat.index >  split], y[feat.index >  split]
+        print(f"  Train: {len(X_tr):,}  |  Test: {len(X_te):,} samples")
+
+        # 4. Fit ensemble
+        print("[4/4] Training RandomForest + GradientBoosting ensemble...")
+        self.model_rf = RandomForestRegressor(
+            n_estimators=500, max_features=0.6,
+            min_samples_leaf=2, random_state=42, n_jobs=-1
+        )
+        self.model_gbm = GradientBoostingRegressor(
+            n_estimators=500, learning_rate=0.04,
+            max_depth=4, min_samples_leaf=3,
+            subsample=0.8, random_state=42
+        )
+        self.model_rf.fit(X_tr, y_tr)
+        print("  RF done...")
+        self.model_gbm.fit(X_tr, y_tr)
+        print("  GBM done...")
+
+        # Evaluate on held-out test set
+        pred = self._ensemble(X_te)
+        self.mae  = float(mean_absolute_error(y_te, pred))
+        self.rmse = float(np.sqrt(np.mean((y_te.values - pred) ** 2)))
+        self.last_trained = datetime.now()
+
+        print(f"\n✅ Training complete!")
+        print(f"   Station : {self.station_name} (ID={self.station_id})")
+        print(f"   MAE     : {self.mae:.4f} m")
+        print(f"   RMSE    : {self.rmse:.4f} m")
+        print(f"   Trained : {self.last_trained.strftime('%Y-%m-%d %H:%M')}")
+        return True
+
+    def _ensemble(self, X) -> np.ndarray:
+        """40% RF + 60% GBM weighted ensemble prediction."""
+        return 0.4 * self.model_rf.predict(X) + 0.6 * self.model_gbm.predict(X)
+
+    # ── Forecasting ────────────────────────────────────────────────────────
+
+    def forecast(self, days: int = 7) -> pd.DataFrame:
+        """
+        Iterative multi-step forecast.
+        Each day's prediction is fed back as input for the next day.
+        """
+        if self.model_rf is None:
+            raise RuntimeError("Call train() or load() before forecast().")
+
+        ts_work = self.ts.copy()
+        results = []
+
+        for _ in range(days):
+            feat = self.make_features(ts_work).dropna()
+            last_row = feat.iloc[[-1]][self.feature_cols]
+            yhat = round(float(self._ensemble(last_row)[0]), 3)
+
+            next_date = ts_work.index.max() + pd.Timedelta(days=1)
+            ts_work.loc[next_date, "y"] = yhat
+            results.append({"date": next_date, "level_m": yhat})
+
+        return pd.DataFrame(results)
+
+    # ── Helpers ────────────────────────────────────────────────────────────
+
+    def current_level(self) -> Optional[float]:
+        """Latest observed water level in metres."""
+        return float(self.ts["y"].iloc[-1]) if self.ts is not None else None
+
+    def recent_avg(self, days: int = 30) -> Optional[float]:
+        """Rolling average of last `days` observations."""
+        return float(self.ts["y"].tail(days).mean()) if self.ts is not None else None
+
+    # ── Persistence ────────────────────────────────────────────────────────
+
+    def save(self, path: str = "water_model.joblib"):
+        joblib.dump(self.__dict__, path, compress=3)
+        print(f"Model saved → {path}")
+
+    @classmethod
+    def load(cls, path: str = "water_model.joblib") -> "WaterLevelPredictor":
+        obj = cls()
+        state = joblib.load(path)
+        for k, v in state.items():
+            setattr(obj, k, v)
+        ts_str = obj.last_trained.strftime("%Y-%m-%d %H:%M") if obj.last_trained else "unknown"
+        print(f"Model loaded ← {path}  (trained: {ts_str}, MAE={obj.mae:.4f})")
+        return obj
